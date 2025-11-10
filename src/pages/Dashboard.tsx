@@ -1,20 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Plus, LogOut, Wallet } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { getUserGroups } from '../services/groupService';
 import { GroupCard } from '../components/Groups/GroupCard';
 import { GroupDetails } from '../components/Groups/GroupDetails';
 import { CreateGroupModal } from '../components/Groups/CreateGroupModal';
-
-interface Group {
-  id: string;
-  name: string;
-  description: string;
-  total_pooled: number;
-  status: 'active' | 'closed';
-  created_at: string;
-  memberCount?: number;
-}
+import { Group } from '../types';
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
@@ -24,54 +15,20 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadGroups();
-  }, []);
-
-  const loadGroups = async () => {
-    setLoading(true);
-    try {
-      const { data: memberData, error: memberError } = await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq('user_id', user!.id);
-
-      if (memberError) throw memberError;
-
-      const groupIds = memberData?.map((m) => m.group_id) || [];
-
-      if (groupIds.length === 0) {
-        setGroups([]);
+    if (user) {
+      const unsubscribe = getUserGroups(user.uid, (userGroups) => {
+        setGroups(userGroups);
         setLoading(false);
-        return;
-      }
+      });
+      return unsubscribe;
+    }
+  }, [user]);
 
-      const { data: groupsData, error: groupsError } = await supabase
-        .from('groups')
-        .select('*')
-        .in('id', groupIds)
-        .order('created_at', { ascending: false });
-
-      if (groupsError) throw groupsError;
-
-      const groupsWithCounts = await Promise.all(
-        (groupsData || []).map(async (group) => {
-          const { count } = await supabase
-            .from('group_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('group_id', group.id);
-
-          return {
-            ...group,
-            memberCount: count || 0,
-          };
-        })
-      );
-
-      setGroups(groupsWithCounts);
-    } catch (error) {
-      console.error('Error loading groups:', error);
-    } finally {
-      setLoading(false);
+  const loadGroups = () => {
+    if (user) {
+      getUserGroups(user.uid, (userGroups) => {
+        setGroups(userGroups);
+      });
     }
   };
 
@@ -98,7 +55,7 @@ export function Dashboard() {
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Welcome back!</h1>
               <p className="text-gray-600">
-                {user?.user_metadata?.display_name || user?.email}
+                {user?.displayName || user?.email}
               </p>
             </div>
           </div>
