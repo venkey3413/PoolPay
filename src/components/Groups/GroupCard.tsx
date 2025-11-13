@@ -4,10 +4,10 @@ interface Group {
   id: string;
   name: string;
   description: string;
-  total_pooled: number;
+  totalPooled: number;
   status: 'active' | 'closed';
-  created_at: string;
-  memberCount?: number;
+  createdAt: any;
+  members?: any[];
 }
 
 interface GroupCardProps {
@@ -40,12 +40,12 @@ export function GroupCard({ group, onClick }: GroupCardProps) {
       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
         <div className="flex items-center gap-2 text-gray-600">
           <Users className="w-5 h-5" />
-          <span className="text-sm">{group.memberCount || 0} members</span>
+          <span className="text-sm">{group.members?.length || 0} members</span>
         </div>
         <div className="flex items-center gap-2">
           <Wallet className="w-5 h-5 text-blue-600" />
           <span className="text-lg font-bold text-gray-800">
-            ₹{group.total_pooled.toFixed(2)}
+            ₹{(group.totalPooled || 0).toFixed(2)}
           </span>
         </div>
       </div>

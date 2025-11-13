@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Plus, LogOut, Wallet } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserGroups } from '../services/groupService';
+import { getUserGroups, Group } from '../services/groupService';
 import { GroupCard } from '../components/Groups/GroupCard';
 import { GroupDetails } from '../components/Groups/GroupDetails';
 import { CreateGroupModal } from '../components/Groups/CreateGroupModal';
-import { Group } from '../types';
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
@@ -53,9 +52,9 @@ export function Dashboard() {
               <Wallet className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Welcome back!</h1>
+              <h1 className="text-2xl font-bold text-gray-800">Welcome to PoolPay!</h1>
               <p className="text-gray-600">
-                {user?.displayName || user?.email}
+                {user?.email}
               </p>
             </div>
           </div>

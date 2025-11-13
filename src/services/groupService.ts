@@ -1,43 +1,54 @@
-import { collection, addDoc, doc, updateDoc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Group, GroupMember } from '../types';
 
-export const createGroup = async (groupData: Omit<Group, 'id' | 'createdAt' | 'members'>) => {
-  const docRef = await addDoc(collection(db, 'groups'), {
-    ...groupData,
-    createdAt: new Date(),
-    members: []
-  });
-  return docRef.id;
-};
+export interface Group {
+  id: string;
+  name: string;
+  description: string;
+  createdBy: string;
+  totalPooled: number;
+  status: 'active' | 'closed';
+  createdAt: any;
+  members: any[];
+}
 
-export const addMemberToGroup = async (groupId: string, member: Omit<GroupMember, 'id' | 'joinedAt'>) => {
-  await addDoc(collection(db, 'groupMembers'), {
-    ...member,
-    groupId,
-    joinedAt: new Date(),
-    contributedAmount: 0
-  });
+export const createGroup = async (groupData: any) => {
+  try {
+    const docRef = await addDoc(collection(db, 'groups'), {
+      ...groupData,
+      createdAt: new Date(),
+      totalPooled: 0,
+      status: 'active'
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating group:', error);
+    throw error;
+  }
 };
 
 export const getUserGroups = (userId: string, callback: (groups: Group[]) => void) => {
-  const q = query(collection(db, 'groupMembers'), where('userId', '==', userId));
-  return onSnapshot(q, async (snapshot) => {
-    const memberDocs = snapshot.docs;
-    const groupIds = memberDocs.map(doc => doc.data().groupId);
-    
-    if (groupIds.length === 0) {
-      callback([]);
-      return;
-    }
-
-    const groupsQuery = query(collection(db, 'groups'), where('__name__', 'in', groupIds));
-    const groupsSnapshot = await getDocs(groupsQuery);
-    const groups = groupsSnapshot.docs.map(doc => ({
+  const q = query(collection(db, 'groups'), where('createdBy', '==', userId));
+  
+  return onSnapshot(q, (snapshot) => {
+    const groups = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Group[];
-    
     callback(groups);
   });
+};
+
+export const getGroupById = async (groupId: string) => {
+  try {
+    const groupDoc = await getDocs(query(collection(db, 'groups'), where('__name__', '==', groupId)));
+    if (!groupDoc.empty) {
+      const doc = groupDoc.docs[0];
+      return { id: doc.id, ...doc.data() } as Group;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting group:', error);
+    return null;
+  }
 };
