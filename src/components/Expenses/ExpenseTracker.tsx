@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Plus, Filter, TrendingUp, Calendar } from 'lucide-react';
 import { AddExpense } from './AddExpense';
 import { SettlementSystem } from './SettlementSystem';
-import { GroupMember } from '../../types';
+
+interface Member {
+  id?: string;
+  name: string;
+  upiId: string;
+}
 
 interface Expense {
   id: string;
@@ -16,7 +21,7 @@ interface Expense {
 
 interface ExpenseTrackerProps {
   groupId: string;
-  members: GroupMember[];
+  members: Member[];
 }
 
 export function ExpenseTracker({ groupId, members }: ExpenseTrackerProps) {
@@ -36,7 +41,7 @@ export function ExpenseTracker({ groupId, members }: ExpenseTrackerProps) {
   ];
 
   const getMemberName = (memberId: string) => {
-    return members.find(m => m.id === memberId)?.displayName || 'Unknown';
+    return members.find(m => m.name === memberId || m.id === memberId)?.name || 'Unknown';
   };
 
   const getCategoryIcon = (categoryId: string) => {
@@ -69,7 +74,7 @@ export function ExpenseTracker({ groupId, members }: ExpenseTrackerProps) {
           </div>
           <div className="bg-green-50 p-3 rounded-lg">
             <p className="text-green-600 font-medium">Your Share</p>
-            <p className="text-2xl font-bold text-green-800">₹{(totalExpenses / members.length).toFixed(2)}</p>
+            <p className="text-2xl font-bold text-green-800">₹{(totalExpenses / Math.max(members.length, 1)).toFixed(2)}</p>
           </div>
         </div>
       </div>
@@ -188,7 +193,6 @@ export function ExpenseTracker({ groupId, members }: ExpenseTrackerProps) {
           groupId={groupId}
           members={members}
           onExpenseAdded={() => {
-            // Refresh expenses
             setShowAddExpense(false);
           }}
           onClose={() => setShowAddExpense(false)}

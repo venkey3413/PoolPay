@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { Calculator, Users, Percent } from 'lucide-react';
-import { GroupMember } from '../../types';
+
+interface Member {
+  id: string;
+  name: string;
+  upiId: string;
+}
 
 interface SplitCalculatorProps {
-  members: GroupMember[];
+  members: Member[];
   totalAmount: number;
   onSplitCalculated: (splits: { memberId: string; amount: number }[]) => void;
 }
@@ -15,20 +20,20 @@ export function SplitCalculator({ members, totalAmount, onSplitCalculated }: Spl
 
   const calculateEqualSplit = () => {
     const perPerson = totalAmount / members.length;
-    return members.map(member => ({ memberId: member.id, amount: perPerson }));
+    return members.map(member => ({ memberId: member.id || member.name, amount: perPerson }));
   };
 
   const calculateCustomSplit = () => {
     return members.map(member => ({ 
-      memberId: member.id, 
-      amount: customAmounts[member.id] || 0 
+      memberId: member.id || member.name, 
+      amount: customAmounts[member.id || member.name] || 0 
     }));
   };
 
   const calculatePercentageSplit = () => {
     return members.map(member => ({ 
-      memberId: member.id, 
-      amount: (totalAmount * (percentages[member.id] || 0)) / 100 
+      memberId: member.id || member.name, 
+      amount: (totalAmount * (percentages[member.id || member.name] || 0)) / 100 
     }));
   };
 
@@ -81,8 +86,8 @@ export function SplitCalculator({ members, totalAmount, onSplitCalculated }: Spl
 
       <div className="space-y-3 mb-6">
         {members.map(member => (
-          <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span className="font-medium">{member.displayName}</span>
+          <div key={member.id || member.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <span className="font-medium">{member.name}</span>
             
             {splitType === 'equal' && (
               <span className="text-blue-600 font-semibold">₹{(totalAmount / members.length).toFixed(2)}</span>
@@ -91,8 +96,8 @@ export function SplitCalculator({ members, totalAmount, onSplitCalculated }: Spl
             {splitType === 'custom' && (
               <input
                 type="number"
-                value={customAmounts[member.id] || ''}
-                onChange={(e) => setCustomAmounts({...customAmounts, [member.id]: parseFloat(e.target.value) || 0})}
+                value={customAmounts[member.id || member.name] || ''}
+                onChange={(e) => setCustomAmounts({...customAmounts, [member.id || member.name]: parseFloat(e.target.value) || 0})}
                 className="w-24 px-2 py-1 border rounded text-right"
                 placeholder="0"
               />
@@ -102,15 +107,15 @@ export function SplitCalculator({ members, totalAmount, onSplitCalculated }: Spl
               <div className="flex items-center gap-2">
                 <input
                   type="number"
-                  value={percentages[member.id] || ''}
-                  onChange={(e) => setPercentages({...percentages, [member.id]: parseFloat(e.target.value) || 0})}
+                  value={percentages[member.id || member.name] || ''}
+                  onChange={(e) => setPercentages({...percentages, [member.id || member.name]: parseFloat(e.target.value) || 0})}
                   className="w-16 px-2 py-1 border rounded text-right"
                   placeholder="0"
                   max="100"
                 />
                 <span>%</span>
                 <span className="text-blue-600 font-semibold w-20 text-right">
-                  ₹{((totalAmount * (percentages[member.id] || 0)) / 100).toFixed(2)}
+                  ₹{((totalAmount * (percentages[member.id || member.name] || 0)) / 100).toFixed(2)}
                 </span>
               </div>
             )}

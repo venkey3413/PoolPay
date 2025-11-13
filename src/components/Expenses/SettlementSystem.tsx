@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight, CheckCircle, Clock } from 'lucide-react';
-import { GroupMember } from '../../types';
+
+interface Member {
+  id?: string;
+  name: string;
+  upiId: string;
+}
 
 interface Settlement {
   from: string;
@@ -11,19 +16,18 @@ interface Settlement {
 
 interface SettlementSystemProps {
   groupId: string;
-  members: GroupMember[];
+  members: Member[];
 }
 
 export function SettlementSystem({ groupId, members }: SettlementSystemProps) {
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
 
-  // Calculate who owes whom
   const calculateSettlements = () => {
     // Mock calculation - replace with actual expense data
     const mockBalances: Record<string, number> = {};
     members.forEach(member => {
-      mockBalances[member.id] = Math.random() * 1000 - 500; // Random balance for demo
+      mockBalances[member.name] = Math.random() * 1000 - 500; // Random balance for demo
     });
     
     setBalances(mockBalances);
@@ -56,7 +60,9 @@ export function SettlementSystem({ groupId, members }: SettlementSystemProps) {
   };
 
   useEffect(() => {
-    calculateSettlements();
+    if (members.length > 0) {
+      calculateSettlements();
+    }
   }, [members]);
 
   const markAsSettled = (index: number) => {
@@ -66,7 +72,7 @@ export function SettlementSystem({ groupId, members }: SettlementSystemProps) {
   };
 
   const getMemberName = (memberId: string) => {
-    return members.find(m => m.id === memberId)?.displayName || 'Unknown';
+    return members.find(m => m.name === memberId)?.name || memberId;
   };
 
   return (
@@ -78,10 +84,10 @@ export function SettlementSystem({ groupId, members }: SettlementSystemProps) {
         <h4 className="font-medium mb-3">Individual Balances</h4>
         <div className="space-y-2">
           {members.map(member => {
-            const balance = balances[member.id] || 0;
+            const balance = balances[member.name] || 0;
             return (
-              <div key={member.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span>{member.displayName}</span>
+              <div key={member.name} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span>{member.name}</span>
                 <span className={`font-semibold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {balance >= 0 ? '+' : ''}₹{balance.toFixed(2)}
                 </span>

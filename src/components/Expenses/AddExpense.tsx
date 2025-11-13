@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { Plus, Receipt, Camera } from 'lucide-react';
 import { SplitCalculator } from './SplitCalculator';
-import { GroupMember } from '../../types';
+
+interface Member {
+  id: string;
+  name: string;
+  upiId: string;
+}
 
 interface AddExpenseProps {
   groupId: string;
-  members: GroupMember[];
+  members: Member[];
   onExpenseAdded: () => void;
   onClose: () => void;
 }
@@ -24,11 +29,10 @@ export function AddExpense({ groupId, members, onExpenseAdded, onClose }: AddExp
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('food');
-  const [paidBy, setPaidBy] = useState(members[0]?.id || '');
+  const [paidBy, setPaidBy] = useState(members[0]?.name || '');
   const [receipt, setReceipt] = useState<File | null>(null);
 
   const handleSplitCalculated = (splits: { memberId: string; amount: number }[]) => {
-    // Add expense logic here
     console.log('Expense:', { description, amount, category, paidBy, splits });
     onExpenseAdded();
     onClose();
@@ -102,8 +106,8 @@ export function AddExpense({ groupId, members, onExpenseAdded, onClose }: AddExp
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 {members.map(member => (
-                  <option key={member.id} value={member.id}>
-                    {member.displayName}
+                  <option key={member.name} value={member.name}>
+                    {member.name}
                   </option>
                 ))}
               </select>

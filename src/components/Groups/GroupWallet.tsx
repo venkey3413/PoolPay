@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Wallet, Send, QrCode } from 'lucide-react';
+import { useState } from 'react';
+import { Wallet, Plus, Calculator, TrendingUp, CreditCard } from 'lucide-react';
+import { ExpenseTracker } from '../Expenses/ExpenseTracker';
 import { MerchantPayment } from '../Payments/MerchantPayment';
 import { PaymentRequestsList } from '../Payments/PaymentRequestsList';
-import { ExpenseTracker } from '../Expenses/ExpenseTracker';
-import { Group } from '../../types';
+import { SettlementSystem } from '../Expenses/SettlementSystem';
 
 interface GroupWalletProps {
-  group: Group;
+  group: any;
   onRefresh: () => void;
 }
 
 export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
-  const [activeTab, setActiveTab] = useState<'balance' | 'expenses' | 'pay' | 'requests'>('balance');
+  const [activeTab, setActiveTab] = useState<'balance' | 'expenses' | 'settlements' | 'pay' | 'requests'>('balance');
 
   return (
     <div className="bg-white rounded-lg shadow-md">
@@ -26,7 +26,7 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-500">Total Pooled</p>
-            <p className="text-3xl font-bold text-green-600">₹{group.totalPooled.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-green-600">₹{(group.totalPooled || 0).toFixed(2)}</p>
           </div>
         </div>
       </div>
@@ -36,24 +36,35 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
           onClick={() => setActiveTab('balance')}
           className={`flex-1 py-3 px-4 text-center whitespace-nowrap ${activeTab === 'balance' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
         >
+          <Wallet className="w-4 h-4 mx-auto mb-1" />
           Balance
         </button>
         <button
           onClick={() => setActiveTab('expenses')}
           className={`flex-1 py-3 px-4 text-center whitespace-nowrap ${activeTab === 'expenses' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
         >
+          <Plus className="w-4 h-4 mx-auto mb-1" />
           Expenses
+        </button>
+        <button
+          onClick={() => setActiveTab('settlements')}
+          className={`flex-1 py-3 px-4 text-center whitespace-nowrap ${activeTab === 'settlements' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
+        >
+          <Calculator className="w-4 h-4 mx-auto mb-1" />
+          Settlements
         </button>
         <button
           onClick={() => setActiveTab('pay')}
           className={`flex-1 py-3 px-4 text-center whitespace-nowrap ${activeTab === 'pay' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
         >
+          <CreditCard className="w-4 h-4 mx-auto mb-1" />
           Pay Merchant
         </button>
         <button
           onClick={() => setActiveTab('requests')}
           className={`flex-1 py-3 px-4 text-center whitespace-nowrap ${activeTab === 'requests' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
         >
+          <TrendingUp className="w-4 h-4 mx-auto mb-1" />
           Requests
         </button>
       </div>
@@ -62,29 +73,36 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
         {activeTab === 'balance' && (
           <div className="space-y-4">
             <h3 className="font-semibold">Member Contributions</h3>
-            {group.members.map(member => (
-              <div key={member.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span>{member.displayName}</span>
-                <span className="font-medium">₹{member.contributedAmount.toFixed(2)}</span>
+            {group.members?.map((member: any, index: number) => (
+              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <span className="font-medium">{member.name}</span>
+                  <p className="text-sm text-gray-500">{member.upiId}</p>
+                </div>
+                <span className="font-medium">₹{(member.contributed || 0).toFixed(2)}</span>
               </div>
-            ))}
+            )) || <p className="text-gray-500">No members added yet</p>}
           </div>
+        )}
+
+        {activeTab === 'expenses' && (
+          <ExpenseTracker groupId={group.id} members={group.members || []} />
+        )}
+
+        {activeTab === 'settlements' && (
+          <SettlementSystem groupId={group.id} members={group.members || []} />
         )}
 
         {activeTab === 'pay' && (
           <MerchantPayment
             groupId={group.id}
-            availableBalance={group.totalPooled}
+            availableBalance={group.totalPooled || 0}
             onPaymentComplete={onRefresh}
           />
         )}
 
         {activeTab === 'requests' && (
           <PaymentRequestsList groupId={group.id} />
-        )}
-
-        {activeTab === 'expenses' && (
-          <ExpenseTracker groupId={group.id} members={group.members} />
         )}
       </div>
     </div>

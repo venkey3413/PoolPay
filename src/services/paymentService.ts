@@ -79,3 +79,20 @@ export const processUPIPayment = (merchantId: string, amount: number, merchantNa
     window.open(upiUrl, '_blank');
   }
 };
+
+export const sendUPIRequest = async (groupId: string, memberUpiId: string, amount: number, description: string) => {
+  // Generate UPI collect request
+  const collectUrl = `upi://pay?pa=${memberUpiId}&pn=PoolPay&am=${amount}&tn=${encodeURIComponent(description)}&mode=02`;
+  
+  // Store request in Firebase
+  await addDoc(collection(db, 'paymentRequests'), {
+    groupId,
+    memberUpiId,
+    amount,
+    description,
+    status: 'pending',
+    requestedAt: new Date()
+  });
+  
+  return collectUrl;
+};
