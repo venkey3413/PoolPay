@@ -1,202 +1,145 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { collection, query, where, onSnapshot, doc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 interface PaymentRequest {
   id: string;
+  memberName: string;
+  memberUpiId: string;
   amount: number;
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
-  requested_at: string;
-  member: {
-    display_name: string;
-    upi_id: string;
-  };
+  description: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  requestedAt: any;
 }
 
 interface PaymentRequestsListProps {
   groupId: string;
-  currentMemberId: string;
-  onRequestUpdated: () => void;
 }
 
-export function PaymentRequestsList({
-  groupId,
-  currentMemberId,
-  onRequestUpdated,
-}: PaymentRequestsListProps) {
+export function PaymentRequestsList({ groupId }: PaymentRequestsListProps) {
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    loadRequests();
+    const q = query(
+      collection(db, 'paymentRequests'),
+      where('groupId', '==', groupId)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const requestsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as PaymentRequest[];
+      
+      setRequests(requestsData.sort((a, b) => b.requestedAt?.toDate() - a.requestedAt?.toDate()));
+      setLoading(false);
+    });
+
+    return unsubscribe;
   }, [groupId]);
 
-  const loadRequests = async () => {
+  const markAsAccepted = async (requestId: string, amount: number) => {
     try {
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .select(`
-          *,
-          member:group_members(display_name, upi_id)
-        `)
-        .eq('group_id', groupId)
-        .order('requested_at', { ascending: false });
+      // Update request status
+      await updateDoc(doc(db, 'paymentRequests', requestId), {
+        status: 'accepted',
+        acceptedAt: new Date()
+      });
 
-      if (error) throw error;
+      // Add to group wallet
+      await updateDoc(doc(db, 'groups', groupId), {
+        totalPooled: increment(amount)
+      });
 
-      const formattedData = data?.map((req) => ({
-        ...req,
-        member: Array.isArray(req.member) ? req.member[0] : req.member,
-      })) || [];
-
-      setRequests(formattedData);
+      alert('Payment accepted! Amount added to group wallet.');
     } catch (error) {
-      console.error('Error loading requests:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error accepting payment:', error);
     }
   };
 
-  const handleResponse = async (requestId: string, status: 'accepted' | 'rejected', amount: number) => {
-    setActionLoading(requestId);
-
+  const markAsRejected = async (requestId: string) => {
     try {
-      const { error: updateError } = await supabase
-        .from('payment_requests')
-        .update({
-          status,
-          responded_at: new Date().toISOString(),
-        })
-        .eq('id', requestId);
-
-      if (updateError) throw updateError;
-
-      if (status === 'accepted') {
-        const { error: txError } = await supabase.from('transactions').insert({
-          group_id: groupId,
-          member_id: currentMemberId,
-          type: 'pool_in',
-          amount,
-          description: 'Payment request accepted',
-        });
-
-        if (txError) throw txError;
-
-        const { data: groupData } = await supabase
-          .from('groups')
-          .select('total_pooled')
-          .eq('id', groupId)
-          .single();
-
-        if (groupData) {
-          await supabase
-            .from('groups')
-            .update({ total_pooled: groupData.total_pooled + amount })
-            .eq('id', groupId);
-        }
-      }
-
-      await loadRequests();
-      onRequestUpdated();
+      await updateDoc(doc(db, 'paymentRequests', requestId), {
+        status: 'rejected',
+        rejectedAt: new Date()
+      });
     } catch (error) {
-      console.error('Error updating request:', error);
-    } finally {
-      setActionLoading(null);
+      console.error('Error rejecting payment:', error);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock className="w-5 h-5 text-yellow-500" />;
+      case 'accepted': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'rejected': return <XCircle className="w-5 h-5 text-red-500" />;
+      default: return <RefreshCw className="w-5 h-5 text-gray-500" />;
     }
   };
 
   if (loading) {
-    return <div className="text-center py-8 text-gray-600">Loading requests...</div>;
-  }
-
-  if (requests.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
-        <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600">No payment requests yet</p>
+      <div className="bg-white rounded-lg p-6">
+        <div className="text-center py-8 text-gray-500">
+          <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin" />
+          <p>Loading payment requests...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Payment Requests</h3>
-      {requests.map((request) => {
-        const isMine = request.member_id === currentMemberId;
-        const isPending = request.status === 'pending';
-
-        return (
-          <div
-            key={request.id}
-            className={`p-4 rounded-lg border-2 ${
-              request.status === 'accepted'
-                ? 'bg-green-50 border-green-200'
-                : request.status === 'rejected'
-                ? 'bg-red-50 border-red-200'
-                : 'bg-white border-gray-200'
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-medium text-gray-800">{request.member.display_name}</p>
-                  {request.status === 'accepted' && (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  )}
-                  {request.status === 'rejected' && (
-                    <XCircle className="w-5 h-5 text-red-600" />
-                  )}
-                  {request.status === 'pending' && (
-                    <Clock className="w-5 h-5 text-orange-600" />
-                  )}
+    <div className="bg-white rounded-lg p-6">
+      <h3 className="text-lg font-semibold mb-4">Payment Requests</h3>
+      
+      {requests.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <Clock className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+          <p>No payment requests yet</p>
+          <p className="text-sm mt-1">Send UPI requests to pool funds</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {requests.map((request) => (
+            <div key={request.id} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(request.status)}
+                  <div>
+                    <p className="font-medium">{request.memberName}</p>
+                    <p className="text-sm text-gray-500">{request.memberUpiId}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">{request.member.upi_id}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Requested {new Date(request.requested_at).toLocaleDateString()}
-                </p>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-blue-600">₹{request.amount.toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 capitalize">{request.status}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-gray-800">₹{request.amount.toFixed(2)}</p>
-                <span
-                  className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${
-                    request.status === 'accepted'
-                      ? 'bg-green-100 text-green-700'
-                      : request.status === 'rejected'
-                      ? 'bg-red-100 text-red-700'
-                      : request.status === 'pending'
-                      ? 'bg-orange-100 text-orange-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {request.status}
-                </span>
-              </div>
+              
+              <p className="text-sm text-gray-600 mb-3">{request.description}</p>
+              
+              {request.status === 'pending' && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => markAsAccepted(request.id, request.amount)}
+                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
+                  >
+                    Accept & Pool
+                  </button>
+                  <button
+                    onClick={() => markAsRejected(request.id)}
+                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700"
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
-
-            {isMine && isPending && (
-              <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
-                <button
-                  onClick={() => handleResponse(request.id, 'accepted', request.amount)}
-                  disabled={actionLoading === request.id}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  {actionLoading === request.id ? 'Processing...' : 'Accept'}
-                </button>
-                <button
-                  onClick={() => handleResponse(request.id, 'rejected', request.amount)}
-                  disabled={actionLoading === request.id}
-                  className="flex-1 bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
-                >
-                  <XCircle className="w-4 h-4" />
-                  Reject
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      )}
     </div>
   );
 }

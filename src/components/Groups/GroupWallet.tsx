@@ -3,6 +3,7 @@ import { Wallet, Plus, Calculator, TrendingUp, CreditCard } from 'lucide-react';
 import { ExpenseTracker } from '../Expenses/ExpenseTracker';
 import { MerchantPayment } from '../Payments/MerchantPayment';
 import { PaymentRequestsList } from '../Payments/PaymentRequestsList';
+import { SendUPIRequests } from '../Payments/SendUPIRequests';
 import { SettlementSystem } from '../Expenses/SettlementSystem';
 
 interface GroupWalletProps {
@@ -102,7 +103,14 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
         )}
 
         {activeTab === 'requests' && (
-          <PaymentRequestsList groupId={group.id} />
+          <div className="space-y-6">
+            <SendUPIRequests 
+              groupId={group.id} 
+              members={group.members || []} 
+              onRequestsSent={() => {}}
+            />
+            <PaymentRequestsList groupId={group.id} />
+          </div>
         )}
       </div>
     </div>
