@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { X, UserPlus } from 'lucide-react';
+import { X, UserPlus, AlertCircle } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { validateUpiOrPhone, validateEmail } from '../../utils/validation';
 
 interface CreateGroupModalProps {
   onClose: () => void;
@@ -49,7 +50,7 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
         totalPooled: 0,
         status: 'active',
         createdAt: new Date(),
-        members: members.filter(m => m.name && m.upiId)
+        members: members.filter(m => m.name && m.upiId && validateUpiOrPhone(m.upiId).isValid)
       };
 
       await addDoc(collection(db, 'groups'), groupData);
@@ -129,21 +130,41 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
                       className="w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500"
                       required
                     />
-                    <input
-                      type="email"
-                      value={member.email}
-                      onChange={(e) => updateMember(index, 'email', e.target.value)}
-                      placeholder="Email (optional)"
-                      className="w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500"
-                    />
-                    <input
-                      type="text"
-                      value={member.upiId}
-                      onChange={(e) => updateMember(index, 'upiId', e.target.value)}
-                      placeholder="UPI ID or Phone (9876543210) *"
-                      className="w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
+                    <div>
+                      <input
+                        type="email"
+                        value={member.email}
+                        onChange={(e) => updateMember(index, 'email', e.target.value)}
+                        placeholder="Email (optional)"
+                        className={`w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500 ${
+                          member.email && !validateEmail(member.email) ? 'border-red-500' : ''
+                        }`}
+                      />
+                      {member.email && !validateEmail(member.email) && (
+                        <div className="flex items-center gap-1 mt-1 text-red-600 text-xs">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Enter valid email address</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        value={member.upiId}
+                        onChange={(e) => updateMember(index, 'upiId', e.target.value)}
+                        placeholder="UPI ID or Phone (9876543210) *"
+                        className={`w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500 ${
+                          member.upiId && !validateUpiOrPhone(member.upiId).isValid ? 'border-red-500' : ''
+                        }`}
+                        required
+                      />
+                      {member.upiId && !validateUpiOrPhone(member.upiId).isValid && (
+                        <div className="flex items-center gap-1 mt-1 text-red-600 text-xs">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Enter valid UPI ID (name@bank) or 10-digit phone number</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {members.length > 1 && (
                     <button

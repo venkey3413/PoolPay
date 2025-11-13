@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Send, Users, Calculator } from 'lucide-react';
+import { Send, Users, Calculator, AlertCircle } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { validateAmount } from '../../utils/validation';
 
 interface Member {
   name: string;
@@ -69,13 +70,23 @@ export function SendUPIRequests({ groupId, members, onRequestsSent }: SendUPIReq
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Total Amount to Pool
           </label>
-          <input
-            type="number"
-            value={totalAmount}
-            onChange={(e) => setTotalAmount(e.target.value)}
-            placeholder="5000"
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
+          <div>
+            <input
+              type="number"
+              value={totalAmount}
+              onChange={(e) => setTotalAmount(e.target.value)}
+              placeholder="5000"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                totalAmount && !validateAmount(totalAmount) ? 'border-red-500' : ''
+              }`}
+            />
+            {totalAmount && !validateAmount(totalAmount) && (
+              <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                <AlertCircle className="w-4 h-4" />
+                <span>Enter amount between ₹1 and ₹1,00,000</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div>
@@ -126,7 +137,7 @@ export function SendUPIRequests({ groupId, members, onRequestsSent }: SendUPIReq
 
       <button
         onClick={sendUPIRequests}
-        disabled={loading || !totalAmount || !description || members.length === 0}
+        disabled={loading || !totalAmount || !description || members.length === 0 || !validateAmount(totalAmount)}
         className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
       >
         {loading ? 'Sending Requests...' : `Send UPI Requests (₹${amountPerPerson.toFixed(2)} each)`}
