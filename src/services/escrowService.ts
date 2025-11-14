@@ -1,6 +1,6 @@
 import { doc, updateDoc, increment, addDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { createVirtualAccount, addBeneficiary, bulkPayout, getWalletBalance } from './cashfreeService';
+import { createVirtualAccount, addBeneficiary, bulkPayout, getWalletBalance } from './paymentService';
 
 // Initialize escrow wallet for new group
 export const initializeGroupEscrow = async (groupId: string, groupName: string, members: any[]) => {

@@ -1,7 +1,41 @@
 import { collection, addDoc, doc, updateDoc, query, where, onSnapshot, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PaymentRequest, Transaction } from '../types';
-import { createVirtualAccount, addBeneficiary, sendPayout, bulkPayout, getWalletBalance } from './cashfreeService';
+// Use mock service for development, real service for production
+const USE_MOCK_SERVICE = !import.meta.env.VITE_CASHFREE_CLIENT_ID;
+
+const getCashfreeService = async () => {
+  if (USE_MOCK_SERVICE) {
+    return await import('./mockCashfreeService');
+  } else {
+    return await import('./cashfreeService');
+  }
+};
+
+export const createVirtualAccount = async (groupId: string, groupName: string) => {
+  const service = await getCashfreeService();
+  return service.createVirtualAccount(groupId, groupName);
+};
+
+export const addBeneficiary = async (memberId: string, member: any) => {
+  const service = await getCashfreeService();
+  return service.addBeneficiary(memberId, member);
+};
+
+export const sendPayout = async (transferId: string, memberId: string, amount: number, remarks: string) => {
+  const service = await getCashfreeService();
+  return service.sendPayout(transferId, memberId, amount, remarks);
+};
+
+export const bulkPayout = async (groupId: string, payouts: any[]) => {
+  const service = await getCashfreeService();
+  return service.bulkPayout(groupId, payouts);
+};
+
+export const getWalletBalance = async (groupId: string) => {
+  const service = await getCashfreeService();
+  return service.getWalletBalance(groupId);
+};
 
 export const sendPaymentRequest = async (groupId: string, fromUserId: string, toUserId: string, amount: number) => {
   await addDoc(collection(db, 'paymentRequests'), {

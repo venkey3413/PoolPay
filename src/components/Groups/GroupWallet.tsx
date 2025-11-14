@@ -6,6 +6,7 @@ import { PaymentRequestsList } from '../Payments/PaymentRequestsList';
 import { SendUPIRequests } from '../Payments/SendUPIRequests';
 import { SettlementSystem } from '../Expenses/SettlementSystem';
 import { PaymentModeSelector } from './PaymentModeSelector';
+import { PaymentModeInfo } from './PaymentModeInfo';
 import { getEscrowBalance } from '../../services/escrowService';
 
 interface GroupWalletProps {
@@ -94,6 +95,7 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
       </div>
 
       <div className="p-6">
+        <PaymentModeInfo />
         <PaymentModeSelector 
           currentMode={paymentMode} 
           onModeChange={handleModeChange} 
