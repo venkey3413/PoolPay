@@ -5,6 +5,8 @@ import { MerchantPayment } from '../Payments/MerchantPayment';
 import { PaymentRequestsList } from '../Payments/PaymentRequestsList';
 import { SendUPIRequests } from '../Payments/SendUPIRequests';
 import { SettlementSystem } from '../Expenses/SettlementSystem';
+import { PaymentModeSelector } from './PaymentModeSelector';
+import { getEscrowBalance } from '../../services/escrowService';
 
 interface GroupWalletProps {
   group: any;
@@ -13,6 +15,21 @@ interface GroupWalletProps {
 
 export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
   const [activeTab, setActiveTab] = useState<'balance' | 'expenses' | 'settlements' | 'pay' | 'requests'>('balance');
+  const [paymentMode, setPaymentMode] = useState<'p2p' | 'escrow'>(group.paymentMode || 'p2p');
+  const [escrowBalance, setEscrowBalance] = useState(0);
+
+  const loadEscrowBalance = async () => {
+    if (paymentMode === 'escrow') {
+      const balance = await getEscrowBalance(group.id);
+      setEscrowBalance(balance);
+    }
+  };
+
+  const handleModeChange = (mode: 'p2p' | 'escrow') => {
+    setPaymentMode(mode);
+    // Update group payment mode in Firebase
+    // updateDoc(doc(db, 'groups', group.id), { paymentMode: mode });
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md">
@@ -26,8 +43,14 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500">Total Pooled</p>
-            <p className="text-3xl font-bold text-green-600">₹{(group.totalPooled || 0).toFixed(2)}</p>
+            <p className="text-sm text-gray-500">{paymentMode === 'escrow' ? 'Escrow Balance' : 'Total Pooled'}</p>
+            <p className="text-3xl font-bold text-green-600">₹{(paymentMode === 'escrow' ? escrowBalance : group.totalPooled || 0).toFixed(2)}</p>
+            {paymentMode === 'escrow' && (
+              <p className="text-xs text-blue-600">🔒 Secured in Escrow</p>
+            )}
+            {paymentMode === 'p2p' && (
+              <p className="text-xs text-green-600">⚡ Direct P2P Mode</p>
+            )}
           </div>
         </div>
       </div>
@@ -71,6 +94,11 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
       </div>
 
       <div className="p-6">
+        <PaymentModeSelector 
+          currentMode={paymentMode} 
+          onModeChange={handleModeChange} 
+        />
+        
         {activeTab === 'balance' && (
           <div className="space-y-4">
             <h3 className="font-semibold">Member Contributions</h3>
@@ -97,7 +125,8 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
         {activeTab === 'pay' && (
           <MerchantPayment
             groupId={group.id}
-            availableBalance={group.totalPooled || 0}
+            availableBalance={paymentMode === 'escrow' ? escrowBalance : group.totalPooled || 0}
+            paymentMode={paymentMode}
             onPaymentComplete={onRefresh}
           />
         )}
@@ -107,6 +136,7 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
             <SendUPIRequests 
               groupId={group.id} 
               members={group.members || []} 
+              paymentMode={paymentMode}
               onRequestsSent={() => {}}
             />
             <PaymentRequestsList groupId={group.id} />

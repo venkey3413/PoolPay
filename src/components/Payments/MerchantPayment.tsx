@@ -7,10 +7,11 @@ import { validateUpiOrPhone, validateAmount } from '../../utils/validation';
 interface MerchantPaymentProps {
   groupId: string;
   availableBalance: number;
+  paymentMode: 'p2p' | 'escrow';
   onPaymentComplete: () => void;
 }
 
-export function MerchantPayment({ groupId, availableBalance, onPaymentComplete }: MerchantPaymentProps) {
+export function MerchantPayment({ groupId, availableBalance, paymentMode, onPaymentComplete }: MerchantPaymentProps) {
   const [merchantUpiId, setMerchantUpiId] = useState('');
   const [amount, setAmount] = useState('');
   const [merchantName, setMerchantName] = useState('');
@@ -33,9 +34,12 @@ export function MerchantPayment({ groupId, availableBalance, onPaymentComplete }
 
     setLoading(true);
     try {
-      await payMerchant(groupId, merchantUpiId, paymentAmount, merchantName);
-      // Open UPI payment
-      processUPIPayment(merchantUpiId, paymentAmount, merchantName);
+      if (paymentMode === 'escrow') {
+        await payMerchant(groupId, merchantUpiId, paymentAmount, merchantName);
+      } else {
+        // P2P mode - direct payment
+        processUPIPayment(merchantUpiId, paymentAmount, merchantName);
+      }
       onPaymentComplete();
     } catch (error) {
       console.error('Payment failed:', error);
@@ -132,12 +136,21 @@ export function MerchantPayment({ groupId, availableBalance, onPaymentComplete }
           </p>
         </div>
 
+        <div className="bg-gray-50 p-3 rounded-lg mb-4">
+          <p className="text-sm text-gray-600">
+            {paymentMode === 'escrow' 
+              ? '💰 Payment from group escrow wallet' 
+              : '⚡ Direct payment (requires manual coordination)'
+            }
+          </p>
+        </div>
+
         <button
           onClick={handlePayment}
-          disabled={loading || !merchantUpiId || !amount || !merchantName || !validateUpiOrPhone(merchantUpiId).isValid || !validateAmount(amount) || parseFloat(amount) > availableBalance}
+          disabled={loading || !merchantUpiId || !amount || !merchantName || !validateUpiOrPhone(merchantUpiId).isValid || !validateAmount(amount) || (paymentMode === 'escrow' && parseFloat(amount) > availableBalance)}
           className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400"
         >
-          {loading ? 'Processing...' : `Pay ₹${amount || '0'}`}
+          {loading ? 'Processing...' : `${paymentMode === 'escrow' ? 'Pay from Escrow' : 'Send Payment Link'} ₹${amount || '0'}`}
         </button>
       </div>
 

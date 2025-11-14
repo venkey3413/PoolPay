@@ -1,6 +1,7 @@
 import { collection, addDoc, doc, updateDoc, query, where, onSnapshot, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PaymentRequest, Transaction } from '../types';
+import { createVirtualAccount, addBeneficiary, sendPayout, bulkPayout, getWalletBalance } from './cashfreeService';
 
 export const sendPaymentRequest = async (groupId: string, fromUserId: string, toUserId: string, amount: number) => {
   await addDoc(collection(db, 'paymentRequests'), {
@@ -45,7 +46,14 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id' | 'crea
   });
 };
 
-export const payMerchant = async (groupId: string, merchantUpiId: string, amount: number, merchantName: string) => {
+export const payMerchant = async (groupId: string, merchantUpiId: string, amount: number, merchantName: string, paymentMode: 'p2p' | 'escrow' = 'escrow') => {
+  const transferId = `merchant_${groupId}_${Date.now()}`;
+  
+  if (paymentMode === 'escrow') {
+    // Send payout from escrow wallet
+    await sendPayout(transferId, 'merchant', amount, `Payment to ${merchantName}`);
+  }
+
   // Create payment transaction
   await addTransaction({
     groupId,
@@ -54,14 +62,17 @@ export const payMerchant = async (groupId: string, merchantUpiId: string, amount
     amount,
     description: `Payment to ${merchantName}`,
     merchantName,
-    upiTransactionId: `UPI_${Date.now()}`
+    upiTransactionId: transferId,
+    paymentMode
   });
 
-  // Update group balance
-  const groupRef = doc(db, 'groups', groupId);
-  await updateDoc(groupRef, {
-    totalPooled: increment(-amount)
-  });
+  if (paymentMode === 'escrow') {
+    // Update group balance for escrow
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      totalPooled: increment(-amount)
+    });
+  }
 };
 
 export const processUPIPayment = (merchantId: string, amount: number, merchantName: string) => {
@@ -80,19 +91,30 @@ export const processUPIPayment = (merchantId: string, amount: number, merchantNa
   }
 };
 
-export const sendUPIRequest = async (groupId: string, memberUpiId: string, amount: number, description: string) => {
-  // Generate UPI collect request
-  const collectUrl = `upi://pay?pa=${memberUpiId}&pn=PoolPay&am=${amount}&tn=${encodeURIComponent(description)}&mode=02`;
-  
-  // Store request in Firebase
-  await addDoc(collection(db, 'paymentRequests'), {
+export const sendUPIRequest = async (groupId: string, memberUpiId: string, amount: number, description: string, paymentMode: 'p2p' | 'escrow' = 'p2p') => {
+  let collectUrl;
+  let requestData: any = {
     groupId,
     memberUpiId,
     amount,
     description,
     status: 'pending',
-    requestedAt: new Date()
-  });
+    requestedAt: new Date(),
+    paymentMode
+  };
+
+  if (paymentMode === 'escrow') {
+    // Create virtual account for group if not exists
+    const vAccount = await createVirtualAccount(groupId, `Group ${groupId}`);
+    collectUrl = `upi://pay?pa=${vAccount.upiId}&pn=PoolPay&am=${amount}&tn=${encodeURIComponent(description)}&mode=02`;
+    requestData.virtualAccountId = vAccount.vAccountId;
+  } else {
+    // P2P mode - direct payment
+    collectUrl = `upi://pay?pa=${memberUpiId}&pn=PoolPay&am=${amount}&tn=${encodeURIComponent(description)}&mode=02`;
+  }
+  
+  // Store request in Firebase
+  await addDoc(collection(db, 'paymentRequests'), requestData);
   
   return collectUrl;
 };

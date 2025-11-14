@@ -12,10 +12,11 @@ interface Member {
 interface SendUPIRequestsProps {
   groupId: string;
   members: Member[];
+  paymentMode: 'p2p' | 'escrow';
   onRequestsSent: () => void;
 }
 
-export function SendUPIRequests({ groupId, members, onRequestsSent }: SendUPIRequestsProps) {
+export function SendUPIRequests({ groupId, members, paymentMode, onRequestsSent }: SendUPIRequestsProps) {
   const [totalAmount, setTotalAmount] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,10 +41,17 @@ export function SendUPIRequests({ groupId, members, onRequestsSent }: SendUPIReq
           requestedAt: new Date()
         });
 
-        // Generate UPI collect URL
-        const upiUrl = `upi://pay?pa=${member.upiId}&pn=PoolPay&am=${amountPerPerson}&tn=${encodeURIComponent(description)}&mode=02`;
+        // Generate UPI URL based on payment mode
+        let upiUrl;
+        if (paymentMode === 'escrow') {
+          // Use virtual account for escrow
+          upiUrl = `upi://pay?pa=poolpay.${groupId}@cashfree&pn=PoolPay&am=${amountPerPerson}&tn=${encodeURIComponent(description)}&mode=02`;
+        } else {
+          // Direct P2P to member
+          upiUrl = `upi://pay?pa=${member.upiId}&pn=PoolPay&am=${amountPerPerson}&tn=${encodeURIComponent(description)}&mode=02`;
+        }
         
-        // Open UPI app for each request (in real app, send via notification)
+        // Open UPI app
         if (navigator.userAgent.match(/Android/i)) {
           window.open(upiUrl, '_blank');
         }
@@ -135,12 +143,21 @@ export function SendUPIRequests({ groupId, members, onRequestsSent }: SendUPIReq
         </div>
       </div>
 
+      <div className="bg-gray-50 p-3 rounded-lg mb-4">
+        <p className="text-sm text-gray-600">
+          {paymentMode === 'escrow' 
+            ? '💰 Funds will be held in secure escrow wallet' 
+            : '⚡ Direct transfers between members'
+          }
+        </p>
+      </div>
+
       <button
         onClick={sendUPIRequests}
         disabled={loading || !totalAmount || !description || members.length === 0 || !validateAmount(totalAmount)}
         className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
       >
-        {loading ? 'Sending Requests...' : `Send UPI Requests (₹${amountPerPerson.toFixed(2)} each)`}
+        {loading ? 'Sending Requests...' : `Send ${paymentMode === 'escrow' ? 'Escrow' : 'P2P'} Requests (₹${amountPerPerson.toFixed(2)} each)`}
       </button>
     </div>
   );
