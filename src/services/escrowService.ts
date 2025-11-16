@@ -1,21 +1,14 @@
 import { doc, updateDoc, increment, addDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { createVirtualAccount, addBeneficiary, bulkPayout, getWalletBalance } from './paymentService';
+import { createVirtualAccount, bulkPayout, getWalletBalance } from './paymentService';
 
 // Initialize escrow wallet for new group
 export const initializeGroupEscrow = async (groupId: string, groupName: string, members: any[]) => {
   // Create virtual account
   const vAccount = await createVirtualAccount(groupId, groupName);
   
-  // Add all members as beneficiaries
-  for (const member of members) {
-    await addBeneficiary(member.id, {
-      name: member.name,
-      email: member.email,
-      phone: member.phone,
-      upiId: member.upiId
-    });
-  }
+  // Members will be added via payment links instead of beneficiaries
+  // Razorpay uses payment links for member payments
   
   // Update group with virtual account details
   await updateDoc(doc(db, 'groups', groupId), {
