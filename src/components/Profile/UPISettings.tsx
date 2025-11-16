@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Copy, Check, AlertCircle } from 'lucide-react';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { validateUpiOrPhone } from '../../utils/validation';
@@ -54,12 +54,15 @@ export function UPISettings() {
     setLoading(true);
     try {
       const newPaymentLink = generatePaymentLink(upiId);
+      const userRef = doc(db, 'users', user.uid);
       
-      await updateDoc(doc(db, 'users', user.uid), {
+      // Use setDoc with merge to create document if it doesn't exist
+      await setDoc(userRef, {
         upiId,
         paymentLink: newPaymentLink,
+        email: user.email,
         updatedAt: new Date()
-      });
+      }, { merge: true });
 
       setPaymentLink(newPaymentLink);
       setSaved(true);
