@@ -2,38 +2,38 @@ import { collection, addDoc, doc, updateDoc, query, where, onSnapshot, increment
 import { db } from '../lib/firebase';
 import { PaymentRequest, Transaction } from '../types';
 // Use mock service for development, real service for production
-const USE_MOCK_SERVICE = !import.meta.env.VITE_CASHFREE_CLIENT_ID;
+const USE_MOCK_SERVICE = !import.meta.env.VITE_RAZORPAY_KEY_ID;
 
-const getCashfreeService = async () => {
+const getRazorpayService = async () => {
   if (USE_MOCK_SERVICE) {
-    return await import('./mockCashfreeService');
+    return await import('./mockRazorpayService');
   } else {
-    return await import('./cashfreeService');
+    return await import('./razorpayService');
   }
 };
 
 export const createVirtualAccount = async (groupId: string, groupName: string) => {
-  const service = await getCashfreeService();
+  const service = await getRazorpayService();
   return service.createVirtualAccount(groupId, groupName);
 };
 
-export const addBeneficiary = async (memberId: string, member: any) => {
-  const service = await getCashfreeService();
-  return service.addBeneficiary(memberId, member);
+export const createPaymentLink = async (amount: number, description: string, customerPhone: string, customerEmail: string, upiId?: string) => {
+  const service = await getRazorpayService();
+  return service.createPaymentLink(amount, description, customerPhone, customerEmail, upiId);
 };
 
 export const sendPayout = async (transferId: string, memberId: string, amount: number, remarks: string) => {
-  const service = await getCashfreeService();
+  const service = await getRazorpayService();
   return service.sendPayout(transferId, memberId, amount, remarks);
 };
 
 export const bulkPayout = async (groupId: string, payouts: any[]) => {
-  const service = await getCashfreeService();
+  const service = await getRazorpayService();
   return service.bulkPayout(groupId, payouts);
 };
 
 export const getWalletBalance = async (groupId: string) => {
-  const service = await getCashfreeService();
+  const service = await getRazorpayService();
   return service.getWalletBalance(groupId);
 };
 

@@ -44,8 +44,8 @@ export function SendUPIRequests({ groupId, members, paymentMode, onRequestsSent 
         // Generate UPI URL based on payment mode
         let upiUrl;
         if (paymentMode === 'escrow') {
-          // Use virtual account for escrow
-          upiUrl = `upi://pay?pa=poolpay.${groupId}@cashfree&pn=PoolPay&am=${amountPerPerson}&tn=${encodeURIComponent(description)}&mode=02`;
+          // Use Razorpay payment link for escrow
+          upiUrl = `upi://pay?pa=poolpay@razorpay&pn=PoolPay&am=${amountPerPerson}&tn=${encodeURIComponent(description)}&mode=02`;
         } else {
           // Direct P2P to member
           upiUrl = `upi://pay?pa=${member.upiId}&pn=PoolPay&am=${amountPerPerson}&tn=${encodeURIComponent(description)}&mode=02`;
