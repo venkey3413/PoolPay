@@ -100,8 +100,8 @@ export function MemberManagement({ groupId, members, isAdmin, onMembersUpdated }
           <h3 className="text-xl font-semibold">Group Members</h3>
         </div>
         <div className="space-y-3">
-          {members.map((member) => (
-            <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          {members.map((member, index) => (
+            <div key={member.id || `readonly-member-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{member.name}</span>
@@ -180,8 +180,8 @@ export function MemberManagement({ groupId, members, isAdmin, onMembersUpdated }
       )}
 
       <div className="space-y-3">
-        {members.map((member) => (
-          <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        {members.map((member, index) => (
+          <div key={member.id || `admin-member-${index}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium">{member.name}</span>
