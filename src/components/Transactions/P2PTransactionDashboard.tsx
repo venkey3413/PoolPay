@@ -117,12 +117,14 @@ export function P2PTransactionDashboard({ groupId }: P2PTransactionDashboardProp
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <DollarSign className="w-6 h-6 text-green-600" />
-          <h3 className="text-xl font-semibold">P2P Transaction Dashboard</h3>
+          <div className="p-2 bg-green-600 rounded-lg">
+            <DollarSign className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800">P2P Transaction Dashboard</h3>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg transition-all"
         >
           <Plus className="w-4 h-4" />
           Add Transaction
@@ -131,64 +133,60 @@ export function P2PTransactionDashboard({ groupId }: P2PTransactionDashboardProp
 
       {/* Balance Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-green-50 p-4 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-green-600" />
-            <span className="text-sm font-medium text-green-800">Total Received</span>
+        <div className="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-xl shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-5 h-5 text-white" />
+            <span className="text-sm font-medium text-green-100">Total Received</span>
           </div>
-          <p className="text-2xl font-bold text-green-600">₹{totalReceived.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-white">₹{totalReceived.toFixed(2)}</p>
         </div>
         
-        <div className="bg-red-50 p-4 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingDown className="w-4 h-4 text-red-600" />
-            <span className="text-sm font-medium text-red-800">Total Used</span>
+        <div className="bg-gradient-to-br from-green-400 to-green-500 p-4 rounded-xl shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingDown className="w-5 h-5 text-white" />
+            <span className="text-sm font-medium text-green-100">Total Used</span>
           </div>
-          <p className="text-2xl font-bold text-red-600">₹{totalUsed.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-white">₹{totalUsed.toFixed(2)}</p>
         </div>
         
-        <div className={`p-4 rounded-lg ${balance >= 0 ? 'bg-blue-50' : 'bg-yellow-50'}`}>
-          <div className="flex items-center gap-2 mb-1">
-            <DollarSign className={`w-4 h-4 ${balance >= 0 ? 'text-blue-600' : 'text-yellow-600'}`} />
-            <span className={`text-sm font-medium ${balance >= 0 ? 'text-blue-800' : 'text-yellow-800'}`}>
-              Current Balance
-            </span>
+        <div className="bg-gradient-to-br from-green-600 to-green-700 p-4 rounded-xl shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <DollarSign className="w-5 h-5 text-white" />
+            <span className="text-sm font-medium text-green-100">Current Balance</span>
           </div>
-          <p className={`text-2xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-yellow-600'}`}>
-            ₹{balance.toFixed(2)}
-          </p>
+          <p className="text-2xl font-bold text-white">₹{balance.toFixed(2)}</p>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-gray-800">Total Transactions</span>
+        <div className="bg-gradient-to-br from-green-300 to-green-400 p-4 rounded-xl shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-medium text-green-800">Total Transactions</span>
           </div>
-          <p className="text-2xl font-bold text-gray-600">{transactions.length}</p>
+          <p className="text-2xl font-bold text-green-800">{transactions.length}</p>
         </div>
       </div>
 
       {/* Add Transaction Form */}
       {showAddForm && (
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium mb-3">Add New Transaction</h4>
+        <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200 shadow-lg">
+          <h4 className="font-semibold mb-4 text-green-800">Add New Transaction</h4>
           
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-3 mb-4">
             <button
               onClick={() => setFormType('received')}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 formType === 'received' 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-gray-200 text-gray-700'
+                  ? 'bg-green-600 text-white shadow-md' 
+                  : 'bg-white text-green-600 border border-green-300 hover:bg-green-50'
               }`}
             >
               Money Received
             </button>
             <button
               onClick={() => setFormType('used')}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 formType === 'used' 
-                  ? 'bg-red-600 text-white' 
-                  : 'bg-gray-200 text-gray-700'
+                  ? 'bg-green-600 text-white shadow-md' 
+                  : 'bg-white text-green-600 border border-green-300 hover:bg-green-50'
               }`}
             >
               Money Used
@@ -232,17 +230,17 @@ export function P2PTransactionDashboard({ groupId }: P2PTransactionDashboardProp
             />
           )}
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={handleAddTransaction}
               disabled={loading}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 font-medium shadow-md transition-all"
             >
               {loading ? 'Adding...' : 'Add Transaction'}
             </button>
             <button
               onClick={() => setShowAddForm(false)}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              className="px-6 py-2 bg-white text-green-600 border border-green-300 rounded-lg hover:bg-green-50 font-medium transition-all"
             >
               Cancel
             </button>
@@ -261,24 +259,28 @@ export function P2PTransactionDashboard({ groupId }: P2PTransactionDashboardProp
         ) : (
           <div className="space-y-2">
             {transactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={transaction.id} className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border border-green-100 hover:shadow-md transition-all">
                 <div className="flex items-center gap-3">
-                  {transaction.type === 'received' ? (
-                    <Plus className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <Minus className="w-4 h-4 text-red-600" />
-                  )}
+                  <div className={`p-2 rounded-full ${
+                    transaction.type === 'received' ? 'bg-green-100' : 'bg-green-50'
+                  }`}>
+                    {transaction.type === 'received' ? (
+                      <Plus className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Minus className="w-4 h-4 text-green-500" />
+                    )}
+                  </div>
                   <div>
-                    <p className="font-medium">{transaction.description}</p>
+                    <p className="font-medium text-gray-800">{transaction.description}</p>
                     <div className="text-sm text-gray-500">
-                      {transaction.fromMember && <span>From: {transaction.fromMember} • </span>}
-                      {transaction.forExpense && <span>For: {transaction.forExpense} • </span>}
+                      {transaction.fromMember && <span className="text-green-600">From: {transaction.fromMember} • </span>}
+                      {transaction.forExpense && <span className="text-green-600">For: {transaction.forExpense} • </span>}
                       <span>{transaction.createdAt.toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
-                <span className={`font-semibold ${
-                  transaction.type === 'received' ? 'text-green-600' : 'text-red-600'
+                <span className={`font-bold text-lg ${
+                  transaction.type === 'received' ? 'text-green-600' : 'text-green-500'
                 }`}>
                   {transaction.type === 'received' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
                 </span>
