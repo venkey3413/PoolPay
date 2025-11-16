@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export interface Group {
@@ -44,7 +44,26 @@ export const getGroupById = async (groupId: string) => {
     const groupDoc = await getDocs(query(collection(db, 'groups'), where('__name__', '==', groupId)));
     if (!groupDoc.empty) {
       const doc = groupDoc.docs[0];
-      return { id: doc.id, ...doc.data() } as Group;
+      const groupData = { id: doc.id, ...doc.data() } as Group;
+      
+      // Fetch group members
+      const membersQuery = query(
+        collection(db, 'group_members'),
+        where('group_id', '==', groupId)
+      );
+      const membersSnapshot = await getDocs(membersQuery);
+      
+      const members = membersSnapshot.docs.map(memberDoc => ({
+        id: memberDoc.id,
+        name: memberDoc.data().display_name,
+        email: memberDoc.data().email,
+        upiId: memberDoc.data().upi_id,
+        role: memberDoc.data().role,
+        userId: memberDoc.data().user_id
+      }));
+      
+      groupData.members = members;
+      return groupData;
     }
     return null;
   } catch (error) {
