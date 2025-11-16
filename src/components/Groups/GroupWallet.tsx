@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, Plus, Calculator, TrendingUp, CreditCard } from 'lucide-react';
+import { Wallet, Plus, Calculator, TrendingUp, CreditCard, Users } from 'lucide-react';
 import { ExpenseTracker } from '../Expenses/ExpenseTracker';
 import { MerchantPayment } from '../Payments/MerchantPayment';
 import { PaymentRequestsList } from '../Payments/PaymentRequestsList';
@@ -7,7 +7,9 @@ import { SendUPIRequests } from '../Payments/SendUPIRequests';
 import { SettlementSystem } from '../Expenses/SettlementSystem';
 import { PaymentModeSelector } from './PaymentModeSelector';
 import { PaymentModeInfo } from './PaymentModeInfo';
+import { MemberManagement } from './MemberManagement';
 import { getEscrowBalance } from '../../services/escrowService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface GroupWalletProps {
   group: any;
@@ -15,7 +17,8 @@ interface GroupWalletProps {
 }
 
 export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
-  const [activeTab, setActiveTab] = useState<'balance' | 'expenses' | 'settlements' | 'pay' | 'requests'>('balance');
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'balance' | 'expenses' | 'settlements' | 'pay' | 'requests' | 'members'>('balance');
   const [paymentMode, setPaymentMode] = useState<'p2p' | 'escrow'>(group.paymentMode || 'p2p');
   const [escrowBalance, setEscrowBalance] = useState(0);
 
@@ -92,6 +95,13 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
           <TrendingUp className="w-4 h-4 mx-auto mb-1" />
           Requests
         </button>
+        <button
+          onClick={() => setActiveTab('members')}
+          className={`flex-1 py-3 px-4 text-center whitespace-nowrap ${activeTab === 'members' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
+        >
+          <Users className="w-4 h-4 mx-auto mb-1" />
+          Members
+        </button>
       </div>
 
       <div className="p-6">
@@ -143,6 +153,15 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
             />
             <PaymentRequestsList groupId={group.id} />
           </div>
+        )}
+
+        {activeTab === 'members' && (
+          <MemberManagement
+            groupId={group.id}
+            members={group.members || []}
+            isAdmin={group.created_by === user?.uid}
+            onMembersUpdated={onRefresh}
+          />
         )}
       </div>
     </div>
