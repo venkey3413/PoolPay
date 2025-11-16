@@ -8,6 +8,7 @@ import { SettlementSystem } from '../Expenses/SettlementSystem';
 import { PaymentModeSelector } from './PaymentModeSelector';
 import { PaymentModeInfo } from './PaymentModeInfo';
 import { MemberManagement } from './MemberManagement';
+import { P2PTransactionDashboard } from '../Transactions/P2PTransactionDashboard';
 import { getEscrowBalance } from '../../services/escrowService';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -112,17 +113,23 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
         />
         
         {activeTab === 'balance' && (
-          <div className="space-y-4">
-            <h3 className="font-semibold">Member Contributions</h3>
-            {group.members?.map((member: any, index: number) => (
-              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <span className="font-medium">{member.name}</span>
-                  <p className="text-sm text-gray-500">{member.upiId}</p>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-semibold">Member Contributions</h3>
+              {group.members?.map((member: any, index: number) => (
+                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span className="font-medium">{member.name}</span>
+                    <p className="text-sm text-gray-500">{member.upiId}</p>
+                  </div>
+                  <span className="font-medium">₹{(member.contributed || 0).toFixed(2)}</span>
                 </div>
-                <span className="font-medium">₹{(member.contributed || 0).toFixed(2)}</span>
-              </div>
-            )) || <p className="text-gray-500">No members added yet</p>}
+              )) || <p className="text-gray-500">No members added yet</p>}
+            </div>
+            
+            {paymentMode === 'p2p' && (
+              <P2PTransactionDashboard groupId={group.id} />
+            )}
           </div>
         )}
 
