@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, User, LogOut } from 'lucide-react';
+import { Home, User, Wallet, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function Navbar() {
@@ -28,6 +28,18 @@ export function Navbar() {
               >
                 <Home className="w-4 h-4" />
                 Dashboard
+              </Link>
+              
+              <Link
+                to="/wallet"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive('/wallet') 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Wallet className="w-4 h-4" />
+                Wallet
               </Link>
               
               <Link

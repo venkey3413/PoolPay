@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthPage } from './pages/AuthPage';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
+import { Wallet } from './pages/Wallet';
 import { Navbar } from './components/Layout/Navbar';
 
 function AppContent() {
@@ -27,6 +28,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/wallet" element={<Wallet />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
