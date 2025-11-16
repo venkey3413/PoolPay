@@ -81,12 +81,15 @@ export function MemberManagement({ groupId, members, isAdmin, onMembersUpdated }
 
     setLoading(true);
     try {
+      // Delete the member document from group_members collection
       await deleteDoc(doc(db, 'group_members', memberId));
+      
+      // Refresh the group data to update the UI
       onMembersUpdated();
       alert('Member removed successfully!');
     } catch (error) {
       console.error('Error removing member:', error);
-      alert('Failed to remove member');
+      alert(`Failed to remove member: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
