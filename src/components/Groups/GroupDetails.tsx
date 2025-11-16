@@ -12,12 +12,14 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
   const [group, setGroup] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadGroup = async () => {
+    setLoading(true);
+    const groupData = await getGroupById(groupId);
+    setGroup(groupData);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const loadGroup = async () => {
-      const groupData = await getGroupById(groupId);
-      setGroup(groupData);
-      setLoading(false);
-    };
     loadGroup();
   }, [groupId]);
 
@@ -42,7 +44,7 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
         <h1 className="text-2xl font-bold">{group.name}</h1>
       </div>
       
-      <GroupWallet group={group} onRefresh={() => {}} />
+      <GroupWallet group={group} onRefresh={loadGroup} />
     </div>
   );
 }

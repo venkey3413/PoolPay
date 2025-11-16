@@ -159,7 +159,7 @@ export function GroupWallet({ group, onRefresh }: GroupWalletProps) {
           <MemberManagement
             groupId={group.id}
             members={group.members || []}
-            isAdmin={group.created_by === user?.uid}
+            isAdmin={group.created_by === user?.uid || group.createdBy === user?.uid}
             onMembersUpdated={onRefresh}
           />
         )}
