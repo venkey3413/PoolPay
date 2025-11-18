@@ -1,0 +1,16 @@
+
+version: "3.8"
+
+services:
+  api:
+    build: .
+    container_name: vizag-resort-ai-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - RAG_DB_DIR=/app/chroma_store
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./app/chroma_store:/app/chroma_store
+    restart: unless-stopped

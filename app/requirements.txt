@@ -1,0 +1,10 @@
+
+fastapi
+uvicorn[standard]
+langchain
+langchain-community
+langgraph
+chromadb
+sqlalchemy
+sentence-transformers
+openai
